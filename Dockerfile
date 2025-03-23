@@ -11,9 +11,11 @@ RUN apk add --no-cache \
 RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/local POETRY_VERSION=2.1.1 python3 -
 
 COPY pyproject.toml poetry.lock README.md ./
-
 RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi
+
+RUN git config --global --add safe.directory /project
 
 WORKDIR /project
 
 ENTRYPOINT ["/bin/bash"]
+
