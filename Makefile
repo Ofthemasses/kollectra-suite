@@ -6,4 +6,7 @@ build-docker:
 	docker build -t kollectra-suite-dev .
 
 run-docker:
-	docker run -it --rm -v $(PWD):/project kollectra-suite-dev
+	docker run -it --rm \
+	  -v /var/run/docker.sock:/var/run/docker.sock \
+	  -v $(PWD):/project \
+	  kollectra-suite-dev

@@ -19,7 +19,7 @@ async function createWindow() {
 async function generateSVG () {
     try {
       const digital = fs.readFileSync(
-        __dirname + '/../node_modules/netlistsvg/lib/default.svg', 
+        __dirname + '/../node_modules/netlistsvg/lib/default.svg',
         'utf8'
       );
       const netlistData = JSON.parse(
