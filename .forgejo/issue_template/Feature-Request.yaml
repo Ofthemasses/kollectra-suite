@@ -1,0 +1,49 @@
+name: Feature Request
+description: Suggest a new feature for the Kollectra repository.
+labels: feature request
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Feature Request for Kollectra Repository
+
+        Thank you for considering contributing to the Kollectra project.
+        This template is intended to guide you through submitting a feature request.
+        We encourage you to ensure that your request aligns with the project's
+        philosophy and objectives, as detailed in the README file.
+
+        If you fail to align with one of our philosophy topics, your request will
+        likely be denied.
+
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: Feature Description
+      description: Please provide a detailed description of the feature you'd like to see implemented.
+    validations:
+      required: true
+
+  - type: textarea
+    id: todo-list
+    attributes:
+      label: To-Do List
+      description: Create a checklist of tasks that might be necessary to implement this feature.
+    validations:
+      required: false
+    render:
+      as: checklist
+
+  - type: dropdown
+    id: project-philosophy-topic
+    attributes:
+      label: Project Philosophy Topic
+      description: Select the Project Philosophy Topic your feature request relates to.
+      options:
+        - 3.1.1
+        - 3.1.2
+        - 3.2.1
+        - 3.2.2
+        - 3.3.1
+    validations:
+      required: true
