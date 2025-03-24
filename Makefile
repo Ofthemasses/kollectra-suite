@@ -8,5 +8,6 @@ build-docker:
 run-docker:
 	docker run -it --rm \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
+	  -v /run/dbus/system_bus_socket \
 	  -v $(PWD):/project \
 	  kollectra-suite-dev
