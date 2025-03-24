@@ -21,25 +21,33 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libatk-bridge2.0-dev=2.52.0-1build1 \
     libcups2-dev=2.4.7-1.2ubuntu7.3 \
     libgtk-3-dev=3.24.41-4ubuntu1.2 \
-    libasound2-dev=1.2.11-1build2
+    libasound2-dev=1.2.11-1build2 \
+&& rm -rf /var/lib/apt/lists/*
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
 && echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
   $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
 && apt-get update \
-&& apt-get install -y --no-install-recommends docker-ce=5:28.0.2-1~ubuntu.24.04~noble
-
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+&& apt-get install -y --no-install-recommends docker-ce=5:28.0.2-1~ubuntu.24.04~noble \
+&& rm -rf /var/lib/apt/lists/*
 
 RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/local POETRY_VERSION=2.1.1 python3 -
 
 WORKDIR /project
 
-COPY pyproject.toml poetry.lock README.md ./
+COPY pyproject.toml poetry.lock README.md package.json package-lock.json ./
+
+COPY .git/ ./.git/
 
 RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi
 
 RUN git config --global --add safe.directory /project
+
+RUN pre-commit install && pre-commit install --hook-type commit-msg
+
+RUN npm install
 
 ENTRYPOINT ["/bin/bash"]
