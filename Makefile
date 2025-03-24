@@ -7,7 +7,8 @@ build-docker:
 
 run-docker:
 	docker run -it --rm \
-	  -v /var/run/docker.sock:/var/run/docker.sock \
-	  -v /run/dbus/system_bus_socket \
+	  -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+	  --user="$(id --user):$(id --group)" \
+      -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/project \
 	  kollectra-suite-dev
