@@ -1,44 +1,27 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
-const fs = require('fs');
+// main.js
+const { app, BrowserWindow } = require('electron');
 const path = require('path');
-const netlistsvg = require('netlistsvg');
 
-async function createWindow() {
+function createWindow() {
   const mainWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true,
-      sandbox: true
+      nodeIntegration: false, // Ensure nodeIntegration is disabled
+      contextIsolation: true, // Enable contextIsolation for security
+      enableRemoteModule: false, // Disable the remote module
+      sandbox: true // Enable sandboxing for additional security
     }
   });
 
-  await mainWindow.loadFile('index.html');
+  mainWindow.loadFile('index.html');
 }
 
-async function generateSVG () {
-    try {
-      const digital = fs.readFileSync(
-        __dirname + '/../node_modules/netlistsvg/lib/default.svg',
-        'utf8'
-      );
-      const netlistData = JSON.parse(
-        fs.readFileSync(path.join(__dirname, 'synth.json'), 'utf8')
-      );
-      console.log("TEST");
-      return netlistsvg.render(digital, netlistData);
-    } catch (err) {
-      console.error('Error generating SVG:', err);
-      throw err;
-    }
-};
-
-
-app.whenReady().then(() => {
-    createWindow();
-    ipcMain.handle('generate-svg', generateSVG);
-});
+app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
 });
