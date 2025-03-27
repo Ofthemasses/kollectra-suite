@@ -40,6 +40,8 @@ WORKDIR /project
 
 COPY pyproject.toml poetry.lock README.md package.json package-lock.json ./
 
+COPY node_modules/ ./node_modules/
+
 COPY .git/ ./.git/
 
 RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi

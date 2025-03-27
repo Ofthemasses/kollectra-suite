@@ -9,3 +9,5 @@ async function renderNetlist() {
     console.error('Error rendering netlist:', err);
   }
 }
+
+renderNetlist();
