@@ -1,0 +1,28 @@
+:root {
+    --primary-color: #EF4444;
+    --secondary-color: #4F6367;
+    --tertiary-color: #991B1B;
+    --background-color: #2C0E37;
+    --text-color: #C8C6AF;
+}
+
+body {
+    margin: 0;
+}
+
+#mainContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--background-color);
+    text: var(--text-color);
+}
+
+#svgContainer {
+    width: 90%;
+    height: 90%;
+    overflow: hidden;
+    background-color: var(--text-color);
+}

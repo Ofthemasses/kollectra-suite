@@ -1,3 +1,6 @@
+import './index.css';
+const svgPanZoom = require('svg-pan-zoom');
+
 async function renderNetlist() {
   try {
     const container = document.getElementById('svgContainer');
@@ -5,6 +8,8 @@ async function renderNetlist() {
 
     const svgString = await window.electronAPI.generateSVG();
     container.innerHTML = svgString;
+    svgPanZoom(container.getElementsByTagName('svg')[0],
+               {minZoom: 0})
   } catch (err) {
     console.error('Error rendering netlist:', err);
   }

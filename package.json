@@ -44,6 +44,7 @@
     "file-system": "^2.2.2",
     "netlistsvg": "github:nturley/netlistsvg",
     "stream": "^0.0.3",
+    "svg-pan-zoom": "^3.6.2",
     "web-worker": "^1.5.0"
   },
   "engines": {
