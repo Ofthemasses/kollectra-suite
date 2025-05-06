@@ -2,6 +2,7 @@
 
 UID := $(shell id -u)
 GID := $(shell id -g)
+DOCKER_GID := $(shell stat -c "%g" /var/run/docker.sock)
 
 dev: build-docker run-docker
 
@@ -15,6 +16,7 @@ run-docker:
 	  -v /run/user/1000/bus:/run/user/1000/bus \
 	  -v /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
 	  --user="$(UID):$(GID)" \
+	  --group-add $(DOCKER_GID) \
       -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/project \
 	  kollectra-suite-dev
