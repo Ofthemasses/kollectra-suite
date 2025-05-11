@@ -1,7 +1,10 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
+import { spawn } from 'child_process';
 const fs = require('fs');
 const path = require('path');
 const netlistsvg = require('netlistsvg');
+const Docker = require('dockerode');
+const tar = require('tar-fs');
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
@@ -35,11 +38,118 @@ async function generateSVG () {
     }
 };
 
+async function dockerContainer() {
+    try {
+        console.log("BEGIN");
+		const result = await DockerContainer.initDockerContainer();
+        console.log(result);
+	} catch(error) {
+        console.log(error);
+    }
+    try {
+        await DockerContainer.runCommandInShell("yosys");
+    } catch(error){
+        console.log(error);
+    }
+}
+
+class DockerContainer {
+  static readonly dockerFilePath = path.join(__dirname, 'resources/container');
+  static readonly imageName = 'kollectra-suite-layer';
+
+  static dockerInstance: any = null;
+  static persistentContainer: any = null;
+  static shellStream: any = null;
+
+  static async initDockerContainer() {
+    this.dockerInstance = new Docker();
+    await this.#buildImage();
+    await this.#startDockerContainer();
+  }
+
+  static #buildImage() {
+    return new Promise<void>((resolve, reject) => {
+      const tarStream = tar.pack(this.dockerFilePath);
+      this.dockerInstance.buildImage(
+        tarStream,
+        { t: this.imageName },
+        (err: any, stream: any) => {
+          if (err) return reject(err);
+          this.dockerInstance.modem.followProgress(
+            stream,
+            (err: any) => err ? reject(err) : resolve(),
+            (event: any) => event.stream && process.stdout.write(event.stream)
+          );
+        }
+      );
+    });
+  }
+
+  static async #startDockerContainer() {
+    if (this.persistentContainer) {
+      console.warn("Container already started.");
+      return;
+    }
+
+    const ctr = await this.dockerInstance.createContainer({
+      Image: this.imageName,
+      Tty: true,
+      OpenStdin: true,
+      StdinOnce: false,
+      AttachStdin: true,
+      AttachStdout: true,
+      AttachStderr: true,
+    });
+
+    const stream = await ctr.attach({
+      stream: true,
+      stdin: true,
+      stdout: true,
+      stderr: true,
+    });
+
+    stream.on('data', (chunk: Buffer) => {
+      process.stdout.write(chunk.toString());
+    });
+
+    await ctr.start();
+
+    this.persistentContainer = ctr;
+    this.shellStream = stream;
+
+    console.log("Container shell started.");
+  }
+
+  static async runCommandInShell(command: string) {
+    if (!this.shellStream) {
+      throw new Error('Shell stream not initialized');
+    }
+
+    this.shellStream.write(`${command}\n`);
+  }
+
+  static async stopDockerContainer() {
+    if (!this.persistentContainer) {
+      console.log('No running container.');
+      return;
+    }
+
+    console.log('Stopping container…');
+    await this.persistentContainer.stop();
+    await this.persistentContainer.remove();
+    this.persistentContainer = null;
+    this.shellStream = null;
+  }
+}
+
 app.whenReady().then(() => {
     createWindow();
     ipcMain.handle('generate-svg', generateSVG);
+    ipcMain.handle('docker-container', dockerContainer);
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  DockerContainer.stopDockerContainer().then(() => {
+      if (process.platform !== 'darwin') app.quit();
+  });
 });

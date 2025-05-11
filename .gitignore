@@ -1,6 +1,6 @@
 node_modules/
-dist/
 .webpack/
+dist/blobs/
 
 # Vim Swap
 [._]*.s[a-v][a-z]

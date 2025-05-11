@@ -15,4 +15,9 @@ async function renderNetlist() {
   }
 }
 
+async function runDocker(){
+    await window.electronAPI.dockerContainer();
+}
+
 renderNetlist();
+runDocker();

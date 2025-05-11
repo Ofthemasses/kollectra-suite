@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  generateSVG: () => ipcRenderer.invoke('generate-svg')
+  generateSVG: () => ipcRenderer.invoke('generate-svg'),
+  dockerContainer: () => ipcRenderer.invoke('docker-container')
 });
