@@ -1,5 +1,7 @@
 import './index.css';
 const svgPanZoom = require('svg-pan-zoom');
+const directoryPicker = document.getElementById('dirs');
+const selectedProject = document.getElementById('selectedProject');
 
 async function renderNetlist() {
   try {
@@ -19,5 +21,8 @@ async function runDocker(){
     await window.electronAPI.dockerContainer();
 }
 
-renderNetlist();
-runDocker();
+directoryPicker.addEventListener('click', async () => {
+    const result = await window.electronAPI.selectProject();
+    console.log(result);
+    selectedProject.innerText = result;
+});

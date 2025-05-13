@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, dialog, BrowserWindow, ipcMain } from 'electron';
 import { spawn } from 'child_process';
 const fs = require('fs');
 const path = require('path');
@@ -8,9 +8,10 @@ const tar = require('tar-fs');
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
+let mainWindow: any;
 
 async function createWindow() {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       nodeIntegration: false,
@@ -54,6 +55,19 @@ async function dockerContainer() {
     }
 }
 
+async function selectProject(){
+    const result = await dialog.showOpenDialog(mainWindow, {
+        properties: ['openDirectory']
+    })
+    console.log(result.filePaths[0]);
+    if (!result.canceled){
+       if (!DockerContainer.isDockerContainerInitialised()) await DockerContainer.initDockerContainer();
+       await DockerContainer.switchDirectory(result.filePaths[0]);
+       await DockerContainer.runCommandInShell("cd ../yosys-project && ls -a");
+    }
+    return DockerContainer.hostDir;
+}
+
 class DockerContainer {
   static readonly dockerFilePath = path.join(__dirname, 'resources/container');
   static readonly imageName = 'kollectra-suite-layer';
@@ -64,6 +78,10 @@ class DockerContainer {
   static dockerInstance: any = null;
   static persistentContainer: any = null;
   static shellStream: any = null;
+
+  static isDockerContainerInitialised() {
+      return this.dockerInstance != null;
+  }
 
   static async initDockerContainer() {
     this.dockerInstance = new Docker();
@@ -164,6 +182,7 @@ app.whenReady().then(() => {
     createWindow();
     ipcMain.handle('generate-svg', generateSVG);
     ipcMain.handle('docker-container', dockerContainer);
+    ipcMain.handle('select-project', selectProject);
 });
 
 app.on('window-all-closed', () => {

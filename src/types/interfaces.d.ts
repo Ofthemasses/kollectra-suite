@@ -1,6 +1,7 @@
 export interface IElectronAPI {
   generateSVG: () => Promise<string>,
-  dockerContainer: () => void
+  dockerContainer: () => void,
+  selectProject: () => Promise<string>
 }
 
 declare global {
