@@ -47,7 +47,8 @@ async function dockerContainer() {
         console.log(error);
     }
     try {
-        await DockerContainer.runCommandInShell("yosys");
+        await DockerContainer.switchDirectory("/home/finlay/Documents/Masters/kollectra");
+        await DockerContainer.runCommandInShell("cd ../yosys-project && ls -a");
     } catch(error){
         console.log(error);
     }
@@ -57,6 +58,9 @@ class DockerContainer {
   static readonly dockerFilePath = path.join(__dirname, 'resources/container');
   static readonly imageName = 'kollectra-suite-layer';
 
+  static hostDir: string = null;
+  static readonly containerMountPoint = '/yosys-project';
+
   static dockerInstance: any = null;
   static persistentContainer: any = null;
   static shellStream: any = null;
@@ -65,6 +69,12 @@ class DockerContainer {
     this.dockerInstance = new Docker();
     await this.#buildImage();
     await this.#startDockerContainer();
+  }
+
+  static async switchDirectory(dir: string){
+      await this.stopDockerContainer();
+      this.hostDir = dir;
+      await this.#startDockerContainer();
   }
 
   static #buildImage() {
@@ -91,15 +101,23 @@ class DockerContainer {
       return;
     }
 
-    const ctr = await this.dockerInstance.createContainer({
+    let containerSettings: {[key: string]: any} = {
       Image: this.imageName,
       Tty: true,
       OpenStdin: true,
       StdinOnce: false,
       AttachStdin: true,
       AttachStdout: true,
-      AttachStderr: true,
-    });
+      AttachStderr: true
+    }
+
+    if (this.hostDir !== null){
+        containerSettings["HostConfig"] = {
+            Binds: [`${this.hostDir}:${this.containerMountPoint}:rw`]
+        };
+    }
+
+    const ctr = await this.dockerInstance.createContainer(containerSettings);
 
     const stream = await ctr.attach({
       stream: true,

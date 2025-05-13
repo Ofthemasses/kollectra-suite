@@ -2,7 +2,7 @@
     --primary-color: #EF4444;
     --secondary-color: #4F6367;
     --tertiary-color: #991B1B;
-    --background-color: #2C0E37;
+    --background-color: #0a0a27;
     --text-color: #C8C6AF;
 }
 
@@ -17,12 +17,20 @@ body {
     width: 100vw;
     height: 100vh;
     background-color: var(--background-color);
-    text: var(--text-color);
+    color: var(--text-color);
 }
 
 #svgContainer {
-    width: 90%;
-    height: 90%;
+    width: 75%;
+    height: 95%;
     overflow: hidden;
     background-color: var(--text-color);
+}
+
+#sideBar {
+    display: flex;
+    flex-direction: column;
+    height: 95%;
+    width: 20%;
+    margin-right: calc(5%/3);
 }
