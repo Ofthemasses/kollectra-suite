@@ -15,6 +15,7 @@ run-docker:
 	  -e DBUS_SESSION_BUS_ADDRESS \
 	  -v /run/user/1000/bus:/run/user/1000/bus \
 	  -v /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
+	  -v /:/mnt/host \
 	  --user="$(UID):$(GID)" \
 	  --group-add $(DOCKER_GID) \
       -v /var/run/docker.sock:/var/run/docker.sock \
