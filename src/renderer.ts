@@ -2,6 +2,7 @@ import './index.css';
 const svgPanZoom = require('svg-pan-zoom');
 const directoryPicker = document.getElementById('dirs');
 const selectedProject = document.getElementById('selectedProject');
+const generateNetlistButton = document.getElementById('generateNetlist');
 
 async function renderNetlist() {
   try {
@@ -25,4 +26,8 @@ directoryPicker.addEventListener('click', async () => {
     const result = await window.electronAPI.selectProject();
     console.log(result);
     selectedProject.innerText = result;
+});
+
+generateNetlistButton.addEventListener('click', async () => {
+    renderNetlist();
 });

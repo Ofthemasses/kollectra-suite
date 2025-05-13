@@ -12,7 +12,6 @@ export const plugins = [
   new  CopyWebpackPlugin({
       patterns: [
       { from: 'node_modules/netlistsvg/lib/default.svg', to: 'resources/netlistsvg/default.svg' },
-      { from: 'dist/blobs/synth.json', to: 'resources/synth.json' },
       { from: 'dist/Dockerfile', to: 'resources/container/' }
       ]
   })

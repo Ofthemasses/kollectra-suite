@@ -9,6 +9,7 @@ const tar = require('tar-fs');
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 let mainWindow: any;
+const yosysNetlistCommand = "yosys -p \"read_verilog src/*.v; read_verilog generated/*.v; prep -top Top; write_json -selected /synth.json\""
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
@@ -23,15 +24,25 @@ async function createWindow() {
 }
 
 async function generateSVG () {
+    if (!DockerContainer.isDockerContainerInitialised()){
+        console.error("Container not initialised");
+        return null;
+    }
+
+    await DockerContainer.runCommandInShell("cd /yosys-project && " + yosysNetlistCommand);
+
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    const netlistRawData = await DockerContainer.getNetlist();
+
     try {
       console.log(__dirname);
       const digital = fs.readFileSync(
         path.join(__dirname, 'resources/netlistsvg/default.svg'),
         'utf8'
       );
-      const netlistData = JSON.parse(
-        fs.readFileSync(path.join(__dirname, 'resources/synth.json'), 'utf8')
-      );
+      const netlistData = JSON.parse(netlistRawData);
+      console.log(netlistData);
       return netlistsvg.render(digital, netlistData);
     } catch (err) {
       console.error('Error generating SVG:', err);
@@ -49,7 +60,6 @@ async function dockerContainer() {
     }
     try {
         await DockerContainer.switchDirectory("/home/finlay/Documents/Masters/kollectra");
-        await DockerContainer.runCommandInShell("cd ../yosys-project && ls -a");
     } catch(error){
         console.log(error);
     }
@@ -95,6 +105,38 @@ class DockerContainer {
       await this.#startDockerContainer();
   }
 
+ static async getNetlist(): Promise<string> {
+    if (!this.persistentContainer) {
+      throw new Error('No running container to retrieve netlist from');
+    }
+
+    const exec = await this.persistentContainer.exec({
+      Cmd: ['cat', '/synth.json'],
+      AttachStdout: true,
+      AttachStderr: true
+    });
+
+    const stream = await exec.start({ hijack: true, stdin: false });
+
+    const { PassThrough } = require('stream');
+    const stdoutStream = new PassThrough();
+    const stderrStream = new PassThrough();
+
+    this.dockerInstance.modem.demuxStream(stream, stdoutStream, stderrStream);
+
+    return new Promise<string>((resolve, reject) => {
+      let output = '';
+      stdoutStream.on('data', (chunk: Buffer) => {
+        output += chunk.toString();
+      });
+      stderrStream.on('data', (chunk: Buffer) => {
+        console.error('getNetlist stderr:', chunk.toString());
+      });
+      stream.on('end', () => resolve(output));
+      stream.on('error', (err: any) => reject(err));
+    });
+  }
+
   static #buildImage() {
     return new Promise<void>((resolve, reject) => {
       const tarStream = tar.pack(this.dockerFilePath);
@@ -126,13 +168,13 @@ class DockerContainer {
       StdinOnce: false,
       AttachStdin: true,
       AttachStdout: true,
-      AttachStderr: true
+      AttachStderr: true,
     }
 
     if (this.hostDir !== null){
         containerSettings["HostConfig"] = {
             Binds: [`${this.hostDir}:${this.containerMountPoint}:rw`]
-        };
+        }
     }
 
     const ctr = await this.dockerInstance.createContainer(containerSettings);
