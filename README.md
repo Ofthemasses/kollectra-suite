@@ -19,6 +19,16 @@ xhost local:docker
 make dev
 ```
 
+To include an additional volume with its file path replicated inside the container, use the VOLUME variable when running make:
+
+```bash
+make VOLUME=/some/path dev
+```
+
+The application may open a file browser inside the container when it requests
+access to a host directory. Mounting the volume at the same path ensures that
+the expected files are available when this happens.
+
 ### Launch the application
 #### Build
 ```bash
