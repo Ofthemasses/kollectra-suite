@@ -2,7 +2,11 @@ import './index.css';
 const svgPanZoom = require('svg-pan-zoom');
 const directoryPicker = document.getElementById('dirs');
 const selectedProject = document.getElementById('selectedProject');
-const generateNetlistButton = document.getElementById('generateNetlist');
+const generateNetlistButton: HTMLInputElement = <HTMLInputElement> document.getElementById('generateNetlist');
+
+const LoadingText = "Loading Project"
+const GeneratingText = "Generating Netlist"
+const GenerateButtonText = "Generate Netlist Schematics"
 
 async function renderNetlist() {
   try {
@@ -23,11 +27,16 @@ async function runDocker(){
 }
 
 directoryPicker.addEventListener('click', async () => {
+    selectedProject.innerText = LoadingText;
     const result = await window.electronAPI.selectProject();
     console.log(result);
     selectedProject.innerText = result;
 });
 
 generateNetlistButton.addEventListener('click', async () => {
-    renderNetlist();
+    generateNetlistButton.disabled = true;
+    generateNetlistButton.innerText = GeneratingText;
+    await renderNetlist();
+    generateNetlistButton.disabled = false;
+    generateNetlistButton.innerText = GenerateButtonText;
 });
