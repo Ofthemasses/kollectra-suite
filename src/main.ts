@@ -88,6 +88,7 @@ class DockerContainer {
   static dockerInstance: any = null;
   static persistentContainer: any = null;
   static shellStream: any = null;
+  static watcherActive: boolean = false;
 
   static isDockerContainerInitialised() {
       return this.dockerInstance != null;
@@ -186,9 +187,7 @@ class DockerContainer {
       stderr: true,
     });
 
-    stream.on('data', (chunk: Buffer) => {
-      process.stdout.write(chunk.toString());
-    });
+    this.processStream(stream);
 
     await ctr.start();
 
@@ -204,6 +203,30 @@ class DockerContainer {
     }
 
     this.shellStream.write(`${command}\n`);
+  }
+
+  static toggleWatchLoop(): boolean {
+    this.watcherActive = !this.watcherActive;
+    return this.watcherActive;
+  }
+
+  private static processStream(stream: NodeJS.ReadableStream): void {
+    const TOKEN = '[WATCHER]';
+    let buffer = '';
+    stream.on('data', chunk => {
+      buffer += chunk.toString();
+      let idx: number;
+      while ((idx = buffer.indexOf('\n')) >= 0) {
+        const line = buffer.slice(0, idx).trim();
+        buffer = buffer.slice(idx + 1);
+        if (!line) continue;
+        if (line.includes(TOKEN) && this.watcherActive) {
+            mainWindow.webContents.send('generate-netlist-event');
+        } else {
+          console.log(line);
+        }
+      }
+    });
   }
 
   static async stopDockerContainer() {
@@ -225,6 +248,7 @@ app.whenReady().then(() => {
     ipcMain.handle('generate-svg', generateSVG);
     ipcMain.handle('docker-container', dockerContainer);
     ipcMain.handle('select-project', selectProject);
+    ipcMain.handle('toggle-watch-loop', () => DockerContainer.toggleWatchLoop());
 });
 
 app.on('window-all-closed', () => {

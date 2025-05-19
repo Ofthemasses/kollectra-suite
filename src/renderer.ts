@@ -3,10 +3,13 @@ const svgPanZoom = require('svg-pan-zoom');
 const directoryPicker = document.getElementById('dirs');
 const selectedProject = document.getElementById('selectedProject');
 const generateNetlistButton: HTMLInputElement = <HTMLInputElement> document.getElementById('generateNetlist');
+const watchDirectoryButton: HTMLInputElement = <HTMLInputElement> document.getElementById('watchDirectory');
 
 const LoadingText = "Loading Project"
 const GeneratingText = "Generating Netlist"
 const GenerateButtonText = "Generate Netlist Schematics"
+const WatchButtonText = "Watch Directory"
+const WatchingText = "Watching..."
 
 async function renderNetlist() {
   try {
@@ -33,10 +36,18 @@ directoryPicker.addEventListener('click', async () => {
     selectedProject.innerText = result;
 });
 
-generateNetlistButton.addEventListener('click', async () => {
+async function generateNetlistButtonEvent() {
     generateNetlistButton.disabled = true;
     generateNetlistButton.innerText = GeneratingText;
     await renderNetlist();
     generateNetlistButton.disabled = false;
     generateNetlistButton.innerText = GenerateButtonText;
+}
+
+generateNetlistButton.addEventListener('click', generateNetlistButtonEvent);
+
+window.electronAPI.onGenerateNetlistEvent(generateNetlistButtonEvent);
+
+watchDirectoryButton.addEventListener('click', async () => {
+    watchDirectoryButton.innerText = await window.electronAPI.toggleWatchLoop() ? WatchingText : WatchButtonText;
 });
