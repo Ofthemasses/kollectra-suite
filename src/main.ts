@@ -9,8 +9,14 @@ const tar = require('tar-fs');
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 let mainWindow: any;
-const yosysNetlistCommand = "/opt/oss-cad-suite/bin/yosys -p \"read_verilog src/*.v; read_verilog generated/*.v; prep -top Top; write_json -selected /synth.json\""
 const yosysModuleGetCommand = "/opt/oss-cad-suite/bin/yosys -Q -T -p 'read_verilog src/*; read_verilog generated/*; ls' | sed -n '/modules:/,/^$/ { /modules:/d; /^$/d; s/^[[:space:]]*//; p }'"
+
+let yosysModulesArray: string[];
+let yosysTop: string;
+let yosysSelectedModule: string;
+
+const yosysNetlistCommand = (): string => { return "/opt/oss-cad-suite/bin/yosys -p \"read_verilog src/*.v; read_verilog generated/*.v; prep -top " + yosysTop + "; select -module " + yosysSelectedModule + "; write_json -selected /synth.json\""}
+
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
@@ -30,7 +36,8 @@ async function generateSVG () {
         return null;
     }
 
-    await DockerContainer.runCommandInShell("cd /yosys-project && " + yosysNetlistCommand);
+    await refreshModules();
+    await DockerContainer.runCommandInShell("cd /yosys-project && " + yosysNetlistCommand());
 
     const netlistRawData = await DockerContainer.runCommandInShell('cat /synth.json');
 
@@ -57,10 +64,16 @@ async function selectProject(){
     if (!result.canceled){
        if (!DockerContainer.isDockerContainerInitialised()) await DockerContainer.initDockerContainer();
        await DockerContainer.switchDirectory(result.filePaths[0]);
-       await DockerContainer.runCommandInShell('cd /yosys-project');
-       await DockerContainer.runCommandInShell(yosysModuleGetCommand);
+       await refreshModules();
     }
     return DockerContainer.hostDir;
+}
+
+async function refreshModules() {
+    const modulesRaw: string = await DockerContainer.runCommandInShell('cd /yosys-project && ' + yosysModuleGetCommand);
+    yosysModulesArray = modulesRaw.split('\n');
+    yosysTop = yosysModulesArray.includes(yosysTop) ? yosysTop : yosysModulesArray[0];
+    yosysSelectedModule = yosysModulesArray.includes(yosysSelectedModule) ? yosysSelectedModule : yosysModulesArray[0];
 }
 
 class DockerContainer {
