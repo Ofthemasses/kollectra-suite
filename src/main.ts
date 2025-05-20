@@ -32,7 +32,7 @@ async function generateSVG () {
 
     await DockerContainer.runCommandInShell("cd /yosys-project && " + yosysNetlistCommand);
 
-    const netlistRawData = await DockerContainer.getNetlist();
+    const netlistRawData = await DockerContainer.runCommandInShell('cat /synth.json');
 
     try {
       console.log(__dirname);
@@ -104,38 +104,6 @@ class DockerContainer {
       await this.stopDockerContainer();
       this.hostDir = dir;
       await this.#startDockerContainer();
-  }
-
- static async getNetlist(): Promise<string> {
-    if (!this.persistentContainer) {
-      throw new Error('No running container to retrieve netlist from');
-    }
-
-    const exec = await this.persistentContainer.exec({
-      Cmd: ['cat', '/synth.json'],
-      AttachStdout: true,
-      AttachStderr: true
-    });
-
-    const stream = await exec.start({ hijack: true, stdin: false });
-
-    const { PassThrough } = require('stream');
-    const stdoutStream = new PassThrough();
-    const stderrStream = new PassThrough();
-
-    this.dockerInstance.modem.demuxStream(stream, stdoutStream, stderrStream);
-
-    return new Promise<string>((resolve, reject) => {
-      let output = '';
-      stdoutStream.on('data', (chunk: Buffer) => {
-        output += chunk.toString();
-      });
-      stderrStream.on('data', (chunk: Buffer) => {
-        console.error('getNetlist stderr:', chunk.toString());
-      });
-      stream.on('end', () => resolve(output));
-      stream.on('error', (err: any) => reject(err));
-    });
   }
 
   static #buildImage() {
