@@ -25,10 +25,6 @@ async function renderNetlist() {
   }
 }
 
-async function runDocker(){
-    await window.electronAPI.dockerContainer();
-}
-
 directoryPicker.addEventListener('click', async () => {
     selectedProject.innerText = LoadingText;
     const result = await window.electronAPI.selectProject();

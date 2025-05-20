@@ -49,21 +49,6 @@ async function generateSVG () {
     }
 };
 
-async function dockerContainer() {
-    try {
-        console.log("BEGIN");
-		const result = await DockerContainer.initDockerContainer();
-        console.log(result);
-	} catch(error) {
-        console.log(error);
-    }
-    try {
-        await DockerContainer.switchDirectory("/home/finlay/Documents/Masters/kollectra");
-    } catch(error){
-        console.log(error);
-    }
-}
-
 async function selectProject(){
     const result = await dialog.showOpenDialog(mainWindow, {
         properties: ['openDirectory']
@@ -246,7 +231,6 @@ class DockerContainer {
 app.whenReady().then(() => {
     createWindow();
     ipcMain.handle('generate-svg', generateSVG);
-    ipcMain.handle('docker-container', dockerContainer);
     ipcMain.handle('select-project', selectProject);
     ipcMain.handle('toggle-watch-loop', () => DockerContainer.toggleWatchLoop());
 });
