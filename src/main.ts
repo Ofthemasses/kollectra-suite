@@ -9,7 +9,8 @@ const tar = require('tar-fs');
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 let mainWindow: any;
-const yosysNetlistCommand = "yosys -p \"read_verilog src/*.v; read_verilog generated/*.v; prep -top Top; write_json -selected /synth.json\""
+const yosysNetlistCommand = "/opt/oss-cad-suite/bin/yosys -p \"read_verilog src/*.v; read_verilog generated/*.v; prep -top Top; write_json -selected /synth.json\""
+const yosysModuleGetCommand = "/opt/oss-cad-suite/bin/yosys -Q -T -p 'read_verilog src/*; read_verilog generated/*; ls' | sed -n '/modules:/,/^$/ { /modules:/d; /^$/d; s/^[[:space:]]*//; p }'"
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
@@ -30,8 +31,6 @@ async function generateSVG () {
     }
 
     await DockerContainer.runCommandInShell("cd /yosys-project && " + yosysNetlistCommand);
-
-    await new Promise(resolve => setTimeout(resolve, 3000));
 
     const netlistRawData = await DockerContainer.getNetlist();
 
@@ -73,7 +72,8 @@ async function selectProject(){
     if (!result.canceled){
        if (!DockerContainer.isDockerContainerInitialised()) await DockerContainer.initDockerContainer();
        await DockerContainer.switchDirectory(result.filePaths[0]);
-       await DockerContainer.runCommandInShell("cd ../yosys-project && ls -a");
+       await DockerContainer.runCommandInShell('cd /yosys-project');
+       await DockerContainer.runCommandInShell(yosysModuleGetCommand);
     }
     return DockerContainer.hostDir;
 }
@@ -197,12 +197,46 @@ class DockerContainer {
     console.log("Container shell started.");
   }
 
-  static async runCommandInShell(command: string) {
-    if (!this.shellStream) {
-      throw new Error('Shell stream not initialized');
+  static async runCommandInShell(command: string): Promise<string> {
+    if (!this.persistentContainer) {
+      throw new Error('No running container');
     }
 
-    this.shellStream.write(`${command}\n`);
+    const exec = await this.persistentContainer.exec({
+      Cmd: ['sh', '-c', command],
+      AttachStdout: true,
+      AttachStderr: true
+    });
+
+    const stream = await exec.start({ hijack: true, stdin: false });
+
+    const { PassThrough } = require('stream');
+    const stdoutStream = new PassThrough();
+    const stderrStream = new PassThrough();
+
+    this.dockerInstance.modem.demuxStream(stream, stdoutStream, stderrStream);
+
+    return new Promise<string>((resolve, reject) => {
+      let stdout = '';
+      let stderr = '';
+
+      stdoutStream.on('data', (chunk: Buffer) => {
+        stdout += chunk.toString();
+      });
+
+      stderrStream.on('data', (chunk: Buffer) => {
+        stderr += chunk.toString();
+      });
+
+      stream.on('end', () => {
+        if (stderr) {
+          console.error('Command stderr:', stderr);
+        }
+        resolve(stdout.trim());
+      });
+
+      stream.on('error', (err: any) => reject(err));
+    });
   }
 
   static toggleWatchLoop(): boolean {
@@ -222,8 +256,6 @@ class DockerContainer {
         if (!line) continue;
         if (line.includes(TOKEN) && this.watcherActive) {
             mainWindow.webContents.send('generate-netlist-event');
-        } else {
-          console.log(line);
         }
       }
     });

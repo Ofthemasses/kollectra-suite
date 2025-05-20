@@ -1,7 +1,5 @@
 #!/bin/bash
 
-source /opt/oss-cad-suite/environment
-
 WATCH_DIR="/yosys-project"
 PATTERN=".*\.v$"
 EVENTS="moved_to,close_write"
