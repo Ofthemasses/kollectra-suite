@@ -1,4 +1,4 @@
-import { app, dialog, BrowserWindow, ipcMain } from 'electron';
+import { app, dialog, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { spawn } from 'child_process';
 const fs = require('fs');
 const path = require('path');
@@ -78,7 +78,16 @@ async function refreshModules() {
     const selectableModulesRaw: string = await DockerContainer.runCommandInShell('cd /yosys-project && ' + yosysGetModulesWithTopCommand());
     yosysSelectableModulesArray = selectableModulesRaw.split('\n');
     yosysSelectedModule = yosysSelectableModulesArray.includes(yosysSelectedModule) ? yosysSelectedModule : yosysSelectableModulesArray[0];
-    mainWindow.webContents.send('refresh-modules-event');
+    const payload: ModulePayload = {
+        tops: yosysModulesArray,
+        selectables: yosysSelectableModulesArray
+    };
+    mainWindow.webContents.send('module-data-event', payload);
+}
+
+async function recieveTopModule(_event: IpcMainEvent, moduleName: string){
+    yosysTop = moduleName;
+    await refreshModules();
 }
 
 class DockerContainer {
@@ -251,6 +260,8 @@ app.whenReady().then(() => {
     ipcMain.handle('generate-svg', generateSVG);
     ipcMain.handle('select-project', selectProject);
     ipcMain.handle('toggle-watch-loop', () => DockerContainer.toggleWatchLoop());
+    ipcMain.on('send-top-module', recieveTopModule)
+    ipcMain.on('send-selectable-module', (_event, moduleName: string) => { yosysSelectedModule = moduleName; })
 });
 
 app.on('window-all-closed', () => {

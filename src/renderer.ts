@@ -4,6 +4,8 @@ const directoryPicker = document.getElementById('dirs');
 const selectedProject = document.getElementById('selectedProject');
 const generateNetlistButton: HTMLInputElement = <HTMLInputElement> document.getElementById('generateNetlist');
 const watchDirectoryButton: HTMLInputElement = <HTMLInputElement> document.getElementById('watchDirectory');
+const topModuleSelector: HTMLSelectElement = <HTMLSelectElement> document.getElementById('topModule');
+const selectedModuleSelector: HTMLSelectElement = <HTMLSelectElement> document.getElementById('selectedModule');
 
 const LoadingText = "Loading Project"
 const GeneratingText = "Generating Netlist"
@@ -42,8 +44,40 @@ async function generateNetlistButtonEvent() {
 
 generateNetlistButton.addEventListener('click', generateNetlistButtonEvent);
 
-window.electronAPI.onGenerateNetlistEvent(generateNetlistButtonEvent);
-
 watchDirectoryButton.addEventListener('click', async () => {
     watchDirectoryButton.innerText = await window.electronAPI.toggleWatchLoop() ? WatchingText : WatchButtonText;
+});
+
+topModuleSelector.addEventListener("change", (event) => {
+    window.electronAPI.sendTopModule((<HTMLSelectElement> event.target).value);
+});
+
+selectedModuleSelector.addEventListener("change", (event) => {
+    window.electronAPI.sendSelectableModule((<HTMLSelectElement> event.target).value);
+});
+
+window.electronAPI.onGenerateNetlistEvent(generateNetlistButtonEvent);
+
+window.electronAPI.onModuleDataEvent((data) => {
+    function addModuleToSelector(modules: string[], selector: HTMLSelectElement, previousValue?: string){
+        modules.forEach(moduleText => {
+            const option = document.createElement("option");
+            option.value = moduleText;
+            option.text = moduleText;
+            selector.appendChild(option);
+        });
+
+        if (previousValue && modules.includes(previousValue)) {
+            selector.value = previousValue;
+        }
+    }
+
+    const prevTopValue = topModuleSelector.value;
+    const prevSelectedValue = selectedModuleSelector.value;
+
+    topModuleSelector.innerHTML = '';
+    selectedModuleSelector.innerHTML = '';
+
+    addModuleToSelector(data.tops, topModuleSelector, prevTopValue);
+    addModuleToSelector(data.selectables, selectedModuleSelector, prevSelectedValue);
 });
