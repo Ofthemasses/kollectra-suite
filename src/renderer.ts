@@ -15,13 +15,18 @@ const WatchingText = "Watching..."
 
 async function renderNetlist() {
   try {
-    const container = document.getElementById('svgContainer');
+    const container: HTMLElement = document.getElementById('svgContainer');
     if (!container) throw new Error('SVG container not found');
 
     const svgString = await window.electronAPI.generateSVG();
     container.innerHTML = svgString;
-    svgPanZoom(container.getElementsByTagName('svg')[0],
-               {minZoom: 0})
+    const svg = container.getElementsByTagName('svg')[0]
+    svg.style.width = "100%";
+    svg.style.height = "100%";
+    svgPanZoom(svg,
+               {
+                   minZoom: 0
+               })
   } catch (err) {
     console.error('Error rendering netlist:', err);
   }
