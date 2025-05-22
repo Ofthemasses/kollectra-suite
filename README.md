@@ -30,10 +30,6 @@ access to a host directory. Mounting the volume at the same path ensures that
 the expected files are available when this happens.
 
 ### Launch the application
-#### Build
-```bash
-npm run build
-```
 
 #### Run application
 ```bash
