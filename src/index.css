@@ -34,3 +34,20 @@ body {
     width: 20%;
     margin-right: calc(5%/3);
 }
+
+#sideBar select {
+    padding: 4px;
+    margin-bottom: 8px;
+}
+
+#sideBar label {
+    margin-bottom: 4px;
+}
+
+#sideBar span {
+    height: 2.5%;
+}
+
+#sideBar button {
+    padding: 4px;
+}
