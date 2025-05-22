@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Electron NetlistSVG Demo</title>
+</head>
+<body>
+  <div id="mainContainer">
+      <div id="sideBar">
+          <h3>Schematic Viewer</h3>
+          <button id="dirs">Select Yosys Project</button>
+          <p id="selectedProject">No Project Selected</p>
+          <label for="topModule">Select Top Module</label>
+          <select name="topModule" id="topModule">
+          </select>
+          <label for="topModule">Select Module To Inspect</label>
+          <select name="selectedModule" id="selectedModule">
+          </select>
+          <span></span>
+          <button id="generateNetlist">Generate Netlist Schematics</button>
+          <button id="watchDirectory">Watch Directory</button>
+      </div>
+      <div id="svgContainer"></div>
+  </div>
+</body>
+</html>

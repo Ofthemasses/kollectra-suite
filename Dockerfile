@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     nodejs=18.19.1+dfsg-6ubuntu5 \
     npm=9.2.0~ds1-2 \
     ca-certificates=20240203 \
-    gnupg=2.4.4-2ubuntu17 \
+    gnupg=2.4.4-2ubuntu17.2 \
     lsb-release=12.0-2 \
     libnss3-dev=2:3.98-1build1 \
     libglib2.0-0t64=2.80.0-6ubuntu3.2 \
@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libatk1.0-dev=2.52.0-1build1 \
     libatk-bridge2.0-dev=2.52.0-1build1 \
     libcups2-dev=2.4.7-1.2ubuntu7.3 \
-    libgtk-3-dev=3.24.41-4ubuntu1.2 \
+    libgtk-3-dev=3.24.41-4ubuntu1.3 \
     libasound2-dev=1.2.11-1build2 \
 && rm -rf /var/lib/apt/lists/*
 
@@ -34,11 +34,15 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /
 && apt-get install -y --no-install-recommends docker-ce=5:28.0.2-1~ubuntu.24.04~noble \
 && rm -rf /var/lib/apt/lists/*
 
+RUN usermod -aG docker ubuntu
+
 RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr/local POETRY_VERSION=2.1.1 python3 -
 
 WORKDIR /project
 
 COPY pyproject.toml poetry.lock README.md package.json package-lock.json ./
+
+COPY node_modules/ ./node_modules/
 
 COPY .git/ ./.git/
 

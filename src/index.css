@@ -1,0 +1,53 @@
+:root {
+    --primary-color: #EF4444;
+    --secondary-color: #4F6367;
+    --tertiary-color: #991B1B;
+    --background-color: #0a0a27;
+    --text-color: #C8C6AF;
+}
+
+body {
+    margin: 0;
+}
+
+#mainContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+#svgContainer {
+    width: 75%;
+    height: 95%;
+    overflow: hidden;
+    background-color: var(--text-color);
+}
+
+#sideBar {
+    display: flex;
+    flex-direction: column;
+    height: 95%;
+    width: 20%;
+    margin-right: calc(5%/3);
+}
+
+#sideBar select {
+    padding: 4px;
+    margin-bottom: 8px;
+}
+
+#sideBar label {
+    margin-bottom: 4px;
+}
+
+#sideBar span {
+    height: 2.5%;
+}
+
+#sideBar button {
+    padding: 4px;
+}
