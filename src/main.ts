@@ -11,11 +11,13 @@ declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 let mainWindow: any;
 const yosysModuleGetCommand = "/opt/oss-cad-suite/bin/yosys -Q -T -p 'read_verilog src/*; read_verilog generated/*; ls' | sed -n '/modules:/,/^$/ { /modules:/d; /^$/d; s/^[[:space:]]*//; p }'"
 
-let yosysModulesArray: string[];
+let yosysModulesArray: string [];
+let yosysSelectableModulesArray: string[];
 let yosysTop: string;
 let yosysSelectedModule: string;
 
 const yosysNetlistCommand = (): string => { return "/opt/oss-cad-suite/bin/yosys -p \"read_verilog src/*.v; read_verilog generated/*.v; prep -top " + yosysTop + "; select -module " + yosysSelectedModule + "; write_json -selected /synth.json\""}
+const yosysGetModulesWithTopCommand = (): string => { return "/opt/oss-cad-suite/bin/yosys -Q -T -p 'read_verilog src/*; read_verilog generated/*; prep -top " + yosysTop + "; ls' | sed -n '/modules:/,/^$/ { /modules:/d; /^$/d; s/^[[:space:]]*//; p }'" }
 
 
 async function createWindow() {
@@ -73,7 +75,10 @@ async function refreshModules() {
     const modulesRaw: string = await DockerContainer.runCommandInShell('cd /yosys-project && ' + yosysModuleGetCommand);
     yosysModulesArray = modulesRaw.split('\n');
     yosysTop = yosysModulesArray.includes(yosysTop) ? yosysTop : yosysModulesArray[0];
-    yosysSelectedModule = yosysModulesArray.includes(yosysSelectedModule) ? yosysSelectedModule : yosysModulesArray[0];
+    const selectableModulesRaw: string = await DockerContainer.runCommandInShell('cd /yosys-project && ' + yosysGetModulesWithTopCommand());
+    yosysSelectableModulesArray = selectableModulesRaw.split('\n');
+    yosysSelectedModule = yosysSelectableModulesArray.includes(yosysSelectedModule) ? yosysSelectedModule : yosysSelectableModulesArray[0];
+    mainWindow.webContents.send('refresh-modules-event');
 }
 
 class DockerContainer {
